@@ -2,16 +2,17 @@
  * @author Jefferson Alves Reis (jefaokpta) < jefaokpta@hotmail.com >
  * Date: 20/09/23
  */
-import {ListBucketsCommand, S3Client} from '@aws-sdk/client-s3'
+import {DescribeInstancesCommand, EC2Client} from "@aws-sdk/client-ec2";
 
-const s3Client = new S3Client({
-    region: 'us-east-1',
-});
-const listBuckets = () => {
-    s3Client.send(new ListBucketsCommand({}))
-        .then((data) => {
-            console.log(data)
-        })
+const ec2Client = new EC2Client({
+    region: 'sa-east-1',
+})
+const checkInstanceStatus = (instanceId) => {
+    ec2Client.send(new DescribeInstancesCommand({
+        InstanceIds: [instanceId]
+    })).then((data) => {
+            console.log(data.Reservations[0].Instances[0])
+    })
 }
 
-listBuckets()
+checkInstanceStatus('i-0f3cc179f13b3d217')
