@@ -5,15 +5,12 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "node index.js"
   },
   "author": "jefaokpta@hotmail.com",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.416.0",
     "@aws-sdk/client-s3": "^3.414.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
   }
 }
