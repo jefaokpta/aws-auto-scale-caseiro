@@ -20,13 +20,15 @@ const instanceTypeEnum = {
     't4g.micro': 't4g.micro',
 }
 
-const instanceId = 'i-08c9ff890916fc02c'
-const instanceType = instanceTypeEnum[process.argv[2]]
+const instanceId = process.argv[2]
+const instanceType = instanceTypeEnum[process.argv[3]]
 if (!instanceType) {
     console.log('⚠️ Tipo de instancia inválida')
     process.exit(1)
 }
-console.log('Tipo de instancia selecionada: ' + instanceType)
+console.log('🚀 Tipo de instancia selecionada: ' + instanceType)
+
+stopInstance(instanceId)
 
 function changeInstanceType(instanceId, instanceType) {
     ec2Client.send(new ModifyInstanceAttributeCommand({
@@ -40,34 +42,49 @@ function changeInstanceType(instanceId, instanceType) {
     })
 }
 
-function startInstance(instanceId){
-    console.log('Iniciando instancia...')
-    ec2Client.send(new StartInstancesCommand({
-        InstanceIds: [instanceId]
-    })).then((data) => {
-        console.log(data.StartingInstances[0].CurrentState)
-        checkPool(isInstanceRunning)
-    })
-}
-
 function stopInstance(instanceId){
     console.log('Parando instancia...')
     ec2Client.send(new StopInstancesCommand({
         InstanceIds: [instanceId]
     })).then(async (data) => {
         console.log(data.StoppingInstances[0].CurrentState)
-        checkPool(isInstanceStopped)
+        checkLoop(isInstanceStopped)
+            .then(() => console.log('🎉 agora sim ta prpoonta pra mudar!'))
     })
 }
 
-function checkPool(checkFunction) {
+function startInstance(instanceId){
+    console.log('Iniciando instancia...')
+    ec2Client.send(new StartInstancesCommand({
+        InstanceIds: [instanceId]
+    })).then((data) => {
+        console.log(data.StartingInstances[0].CurrentState)
+        // checkPool(isInstanceRunning)
+    })
+}
+
+async function checkLoop(checkFunction) {
+    for (let i = 0; i < 10; i++) {
+        setTimeout(async () => {
+            if (await checkFunction(instanceId)) {
+                console.log('🎉 Processo completado com sucesso!')
+            }
+        }, 30000)
+    }
+    console.log('🧨 Huston, we have a problem!')
+    process.exit(1)
+}
+async function checkPool(checkFunction) {
     let tries = 0
     setTimeout(async () => {
         if (await checkFunction(instanceId)) console.log('🎉 Processo completado com sucesso!')
         else {
             tries++
             if (tries < 10) checkPool(checkFunction)
-            else console.log('🧨 Huston, we have a problem!')
+            else {
+                console.log('🧨 Huston, we have a problem!')
+                process.exit(1)
+            }
         }
     }, 30000)
 }
