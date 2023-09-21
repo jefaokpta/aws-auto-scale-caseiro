@@ -2,10 +2,10 @@
   "name": "aws-auto-scale-caseiro",
   "version": "1.0.0",
   "description": "fazer auto scale nas instancias aws",
-  "main": "index.js",
+  "main": "main.js",
   "type": "module",
   "scripts": {
-    "dev": "node index.js"
+    "dev": "node main.js"
   },
   "author": "jefaokpta@hotmail.com",
   "license": "ISC",
