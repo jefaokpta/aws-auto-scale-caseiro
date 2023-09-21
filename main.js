@@ -10,15 +10,15 @@ import {
     StopInstancesCommand
 } from "@aws-sdk/client-ec2";
 
-const ec2Client = new EC2Client({
-    // region: 'sa-east-1',
-    region: 'us-east-1',
-})
-
 const instanceTypeEnum = {
     't4g.nano': 't4g.nano',
     't4g.micro': 't4g.micro',
 }
+
+const ec2Client = new EC2Client({
+    // region: 'sa-east-1',
+    region: 'us-east-1',
+})
 
 const instanceId = process.argv[2]
 const instanceType = instanceTypeEnum[process.argv[3]]
@@ -48,8 +48,7 @@ function stopInstance(instanceId){
         InstanceIds: [instanceId]
     })).then(async (data) => {
         console.log(data.StoppingInstances[0].CurrentState)
-        checkLoop(isInstanceStopped)
-            .then(() => console.log('🎉 agora sim ta prpoonta pra mudar!'))
+        checkPool(isInstanceStopped, true)
     })
 }
 
@@ -59,25 +58,17 @@ function startInstance(instanceId){
         InstanceIds: [instanceId]
     })).then((data) => {
         console.log(data.StartingInstances[0].CurrentState)
-        // checkPool(isInstanceRunning)
+        checkPool(isInstanceRunning)
     })
 }
 
-async function checkLoop(checkFunction) {
-    for (let i = 0; i < 10; i++) {
-        setTimeout(async () => {
-            if (await checkFunction(instanceId)) {
-                console.log('🎉 Processo completado com sucesso!')
-            }
-        }, 30000)
-    }
-    console.log('🧨 Huston, we have a problem!')
-    process.exit(1)
-}
-async function checkPool(checkFunction) {
+function checkPool(checkFunction, change) {
     let tries = 0
     setTimeout(async () => {
-        if (await checkFunction(instanceId)) console.log('🎉 Processo completado com sucesso!')
+        if (await checkFunction(instanceId)){
+            if(change) changeInstanceType(instanceId, instanceType)
+            else console.log('🎉 Processo completado com sucesso!')
+        }
         else {
             tries++
             if (tries < 10) checkPool(checkFunction)
@@ -107,7 +98,6 @@ async function checkInstanceStatus(instanceId) {
     const data = await ec2Client.send(new DescribeInstancesCommand({
         InstanceIds: [instanceId]
     }))
-    // console.log(data.Reservations[0].Instances[0])
     return {
         state: data.Reservations[0].Instances[0].State,
         instanceType: data.Reservations[0].Instances[0].InstanceType
