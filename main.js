@@ -26,6 +26,7 @@ if (!instanceType) {
     console.log('⚠️ Tipo de instancia inválida')
     process.exit(1)
 }
+let checkTries = 0
 console.log('🚀 Tipo de instancia selecionada: ' + instanceType)
 
 stopInstance(instanceId)
@@ -63,17 +64,16 @@ function startInstance(instanceId){
 }
 
 function checkPool(checkFunction, change) {
-    let tries = 0
     setTimeout(async () => {
         if (await checkFunction(instanceId)){
             if(change) changeInstanceType(instanceId, instanceType)
-            else console.log('🎉 Processo completado com sucesso!')
+            else console.log('🎉 Processo completado com sucesso!') //todo: avisar sucesso
         }
         else {
-            tries++
-            if (tries < 10) checkPool(checkFunction)
+            checkTries++
+            if (checkTries < 10) checkPool(checkFunction)
             else {
-                console.log('🧨 Huston, we have a problem!')
+                console.log('🧨 Huston, we have a problem!') //todo: avisar falha
                 process.exit(1)
             }
         }
