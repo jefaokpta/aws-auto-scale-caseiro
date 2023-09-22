@@ -12,13 +12,14 @@ import {
 import axios from "axios";
 
 const instanceTypeEnum = {
-    't4g.nano': 't4g.nano',
-    't4g.micro': 't4g.micro',
+    'c5n.xlarge': 'c5n.xlarge',
+    'c5n.2xlarge': 'c5n.2xlarge',
+    'c5n.4xlarge': 'c5n.4xlarge',
+    't3a.small': 't3a.small',
 }
 
 const ec2Client = new EC2Client({
-    // region: 'sa-east-1',
-    region: 'us-east-1',
+    region: 'sa-east-1',
 })
 
 const instanceId = process.argv[2]
