@@ -9,6 +9,7 @@ import {
     StartInstancesCommand,
     StopInstancesCommand
 } from "@aws-sdk/client-ec2";
+import axios from "axios";
 
 const instanceTypeEnum = {
     't4g.nano': 't4g.nano',
@@ -69,7 +70,11 @@ function checkPool(checkFunction, change) {
     setTimeout(async () => {
         if (await checkFunction(instanceId)){
             if(change) changeInstanceType(instanceId, instanceType)
-            else console.log('🎉 Processo completado com sucesso!') //todo: avisar sucesso
+            else{
+                console.log('🎉 Processo completado com sucesso!') //todo: avisar sucesso
+                checkInstanceStatus(instanceId)
+                    .then((data) => axios.post('https://coral-app-ld8ei.ondigitalocean.app', data))
+            }
         }
         else {
             checkTries++
@@ -102,7 +107,8 @@ async function checkInstanceStatus(instanceId) {
     }))
     return {
         state: data.Reservations[0].Instances[0].State,
-        instanceType: data.Reservations[0].Instances[0].InstanceType
+        instanceType: data.Reservations[0].Instances[0].InstanceType,
+        name: data.Reservations[0].Instances[0].Tags[0].Value
     }
 }
 
