@@ -45,6 +45,7 @@ function changeInstanceType(instanceId, instanceType) {
 
 function stopInstance(instanceId){
     console.log('Parando instancia...')
+    checkTries = 0
     ec2Client.send(new StopInstancesCommand({
         InstanceIds: [instanceId]
     })).then(async (data) => {
@@ -55,6 +56,7 @@ function stopInstance(instanceId){
 
 function startInstance(instanceId){
     console.log('Iniciando instancia...')
+    checkTries = 0
     ec2Client.send(new StartInstancesCommand({
         InstanceIds: [instanceId]
     })).then((data) => {
@@ -71,7 +73,7 @@ function checkPool(checkFunction, change) {
         }
         else {
             checkTries++
-            if (checkTries < 10) checkPool(checkFunction)
+            if (checkTries < 10) checkPool(checkFunction, change)
             else {
                 console.log('🧨 Huston, we have a problem!') //todo: avisar falha
                 process.exit(1)
