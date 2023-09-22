@@ -71,16 +71,21 @@ function checkPool(checkFunction, change) {
         if (await checkFunction(instanceId)){
             if(change) changeInstanceType(instanceId, instanceType)
             else{
-                console.log('🎉 Processo completado com sucesso!') //todo: avisar sucesso
+                console.log('🎉 Processo completado com sucesso!')
                 checkInstanceStatus(instanceId)
-                    .then((data) => axios.post('https://coral-app-ld8ei.ondigitalocean.app', data))
+                    .then((data) => axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', data))
             }
         }
         else {
             checkTries++
             if (checkTries < 10) checkPool(checkFunction, change)
             else {
-                console.log('🧨 Huston, we have a problem!') //todo: avisar falha
+                console.log('🧨 Huston, we have a problem!')
+                axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', {
+                    instenceId: instanceId,
+                    instanceType: instanceType,
+                    message: '🧨 Huston, we have a problem!'
+                })
                 process.exit(1)
             }
         }
