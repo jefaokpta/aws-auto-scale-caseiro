@@ -10,6 +10,7 @@ import {
     StopInstancesCommand
 } from "@aws-sdk/client-ec2";
 import axios from "axios";
+import fs from "fs";
 
 const instanceTypeEnum = {
     'c5n.xlarge': 'c5n.xlarge',
@@ -25,13 +26,18 @@ const ec2Client = new EC2Client({
 const instanceId = process.argv[2]
 const instanceType = instanceTypeEnum[process.argv[3]]
 if (!instanceType) {
-    console.log('⚠️ Tipo de instancia inválida')
+    logExternalFile('⚠️ Tipo de instancia inválida')
     process.exit(1)
 }
 let checkTries = 0
-console.log('🚀 Tipo de instancia selecionada: ' + instanceType)
+logExternalFile('🚀 Tipo de instancia selecionada: ' + instanceType)
 
 stopInstance(instanceId)
+
+function logExternalFile(message) {
+    fs.appendFileSync('/var/log/auto-scale.log', message + '\n')
+    console.log(message)
+}
 
 function changeInstanceType(instanceId, instanceType) {
     ec2Client.send(new ModifyInstanceAttributeCommand({
@@ -40,29 +46,29 @@ function changeInstanceType(instanceId, instanceType) {
             Value: instanceType
         }
     })).then(async () => {
-        console.log('Tipo de instancia alterado para ' + instanceType)
+        logExternalFile('Tipo de instancia alterado para ' + instanceType)
         setTimeout(startInstance, 30000, instanceId)
     })
 }
 
 function stopInstance(instanceId){
-    console.log('Parando instancia...')
+    logExternalFile('Parando instancia...')
     checkTries = 0
     ec2Client.send(new StopInstancesCommand({
         InstanceIds: [instanceId]
     })).then(async (data) => {
-        console.log(data.StoppingInstances[0].CurrentState)
+        logExternalFile(data.StoppingInstances[0].CurrentState)
         checkPool(isInstanceStopped, true)
     })
 }
 
 function startInstance(instanceId){
-    console.log('Iniciando instancia...')
+    logExternalFile('Iniciando instancia...')
     checkTries = 0
     ec2Client.send(new StartInstancesCommand({
         InstanceIds: [instanceId]
     })).then((data) => {
-        console.log(data.StartingInstances[0].CurrentState)
+        logExternalFile(data.StartingInstances[0].CurrentState)
         checkPool(isInstanceRunning)
     })
 }
@@ -72,7 +78,7 @@ function checkPool(checkFunction, change) {
         if (await checkFunction(instanceId)){
             if(change) changeInstanceType(instanceId, instanceType)
             else{
-                console.log('🎉 Processo completado com sucesso!')
+                logExternalFile('🎉 Processo completado com sucesso!')
                 checkInstanceStatus(instanceId)
                     .then((data) => axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', data))
             }
@@ -81,7 +87,7 @@ function checkPool(checkFunction, change) {
             checkTries++
             if (checkTries < 10) checkPool(checkFunction, change)
             else {
-                console.log('🧨 Huston, we have a problem!')
+                logExternalFile('🧨 Huston, we have a problem!')
                 axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', {
                     instenceId: instanceId,
                     instanceType: instanceType,
@@ -94,16 +100,16 @@ function checkPool(checkFunction, change) {
 }
 
 async function isInstanceRunning(instanceId) {
-    console.log('Verificando se a instancia está rodando...')
+    logExternalFile('Verificando se a instancia está rodando...')
     const instance = await checkInstanceStatus(instanceId)
-    console.log(instance.state)
+    logExternalFile(instance.state)
     return instance.state.Code === 16
 }
 
 async function isInstanceStopped(instanceId) {
-    console.log('Verificando se a instancia está parada...')
+    logExternalFile('Verificando se a instancia está parada...')
     const instance = await checkInstanceStatus(instanceId)
-    console.log(instance.state)
+    logExternalFile(instance.state)
     return instance.state.Code === 80
 }
 
