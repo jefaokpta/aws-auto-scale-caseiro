@@ -35,7 +35,11 @@ logExternalFile('🚀 Tipo de instancia selecionada: ' + instanceType)
 stopInstance(instanceId)
 
 function logExternalFile(message) {
-    fs.appendFileSync('/var/log/auto-scale.log', message + '\n')
+    // log with timestamp
+    fs.appendFileSync(
+        '/var/log/auto-scale.log',
+        new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'}) + ' - ' + message + '\n'
+    )
     console.log(message)
 }
 
@@ -46,29 +50,29 @@ function changeInstanceType(instanceId, instanceType) {
             Value: instanceType
         }
     })).then(async () => {
-        logExternalFile('Tipo de instancia alterado para ' + instanceType)
+        logExternalFile('🔄 Tipo de instancia alterado para ' + instanceType)
         setTimeout(startInstance, 30000, instanceId)
     })
 }
 
 function stopInstance(instanceId){
-    logExternalFile('Parando instancia...')
+    logExternalFile('🛑 Parando instancia...')
     checkTries = 0
     ec2Client.send(new StopInstancesCommand({
         InstanceIds: [instanceId]
     })).then(async (data) => {
-        logExternalFile(data.StoppingInstances[0].CurrentState)
+        logExternalFile(JSON.stringify(data.StoppingInstances[0].CurrentState))
         checkPool(isInstanceStopped, true)
     })
 }
 
 function startInstance(instanceId){
-    logExternalFile('Iniciando instancia...')
+    logExternalFile('🚀 Iniciando instancia...')
     checkTries = 0
     ec2Client.send(new StartInstancesCommand({
         InstanceIds: [instanceId]
     })).then((data) => {
-        logExternalFile(data.StartingInstances[0].CurrentState)
+        logExternalFile(JSON.stringify(data.StartingInstances[0].CurrentState))
         checkPool(isInstanceRunning)
     })
 }
@@ -100,16 +104,16 @@ function checkPool(checkFunction, change) {
 }
 
 async function isInstanceRunning(instanceId) {
-    logExternalFile('Verificando se a instancia está rodando...')
+    logExternalFile('🔎 Verificando se a instancia está rodando...')
     const instance = await checkInstanceStatus(instanceId)
-    logExternalFile(instance.state)
+    logExternalFile(JSON.stringify(instance.state))
     return instance.state.Code === 16
 }
 
 async function isInstanceStopped(instanceId) {
-    logExternalFile('Verificando se a instancia está parada...')
+    logExternalFile('🔎 Verificando se a instancia está parada...')
     const instance = await checkInstanceStatus(instanceId)
-    logExternalFile(instance.state)
+    logExternalFile(JSON.stringify(instance.state))
     return instance.state.Code === 80
 }
 
