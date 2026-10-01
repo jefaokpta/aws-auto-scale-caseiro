@@ -9,7 +9,6 @@ import {
     StartInstancesCommand,
     StopInstancesCommand
 } from "@aws-sdk/client-ec2";
-import axios from "axios";
 import fs from "fs";
 
 const instanceTypeEnum = {
@@ -84,7 +83,7 @@ function checkPool(checkFunction, change) {
             else{
                 logExternalFile('🎉 Processo completado com sucesso!')
                 checkInstanceStatus(instanceId)
-                    .then((data) => axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', data))
+                    .then((data) => logExternalFile(JSON.stringify(data)))
             }
         }
         else {
@@ -92,11 +91,7 @@ function checkPool(checkFunction, change) {
             if (checkTries < 10) checkPool(checkFunction, change)
             else {
                 logExternalFile('🧨 Huston, we have a problem!')
-                axios.post('https://coral-app-ld8ei.ondigitalocean.app/wip/public/auto-scale', {
-                    instenceId: instanceId,
-                    instanceType: instanceType,
-                    message: '🧨 Huston, we have a problem!'
-                })
+                logExternalFile(JSON.stringify({instanceId, instanceType}))
                 process.exit(1)
             }
         }
